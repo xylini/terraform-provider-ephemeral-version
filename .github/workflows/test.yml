@@ -1,0 +1,91 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Run unit tests
+        run: go test -v -count=1 ./...
+
+  docs:
+    name: Validate Docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.11.*"
+          terraform_wrapper: false
+
+      - name: Install tfplugindocs
+        run: go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
+
+      - name: Build provider
+        run: go build -o terraform-provider-ephemeralversion .
+
+      - name: Export provider schema
+        run: |
+          PLUGIN_DIR="$HOME/.terraform.d/plugins/registry.terraform.io/local/ephemeralversion/0.1.0/linux_amd64"
+          mkdir -p "$PLUGIN_DIR"
+          cp terraform-provider-ephemeralversion "$PLUGIN_DIR/"
+          mkdir -p /tmp/tfschema
+          cat > /tmp/tfschema/main.tf <<'EOF'
+          terraform {
+            required_providers {
+              ephemeralversion = {
+                source  = "registry.terraform.io/local/ephemeralversion"
+                version = "~> 0.1"
+              }
+            }
+          }
+          provider "ephemeralversion" {}
+          EOF
+          cat > /tmp/tfschema/dev.tfrc <<EOF
+          provider_installation {
+            dev_overrides {
+              "registry.terraform.io/local/ephemeralversion" = "$PLUGIN_DIR"
+            }
+            direct {}
+          }
+          EOF
+          TF_CLI_CONFIG_FILE=/tmp/tfschema/dev.tfrc terraform -chdir=/tmp/tfschema providers schema -json 2>/dev/null | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          ps=d['provider_schemas']
+          old=list(ps.keys())[0]
+          ps['ephemeralversion']=ps.pop(old)
+          print(json.dumps(d))
+          " > schema.json
+
+      - name: Validate docs
+        run: |
+          tfplugindocs validate \
+            --provider-name ephemeralversion \
+            --providers-schema schema.json

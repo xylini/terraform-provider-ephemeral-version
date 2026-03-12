@@ -1,0 +1,26 @@
+# Provider binary
+terraform-provider-ephemeralversion
+terraform-provider-ephemeralversion.exe
+
+# GoReleaser dist output
+dist/
+
+# Terraform working directories
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/terraform.tfvars
+**/crash.log
+
+# Dev override config (contains local paths)
+examples/**/dev.tfrc
+
+# tfplugindocs schema export (build artifact)
+schema.json
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
