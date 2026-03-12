@@ -3,7 +3,12 @@
 [![Tests](https://github.com/xylini/terraform-provider-ephemeralversion/actions/workflows/test.yml/badge.svg)](https://github.com/xylini/terraform-provider-ephemeralversion/actions/workflows/test.yml)
 [![Release](https://github.com/xylini/terraform-provider-ephemeralversion/actions/workflows/release.yml/badge.svg)](https://github.com/xylini/terraform-provider-ephemeralversion/actions/workflows/release.yml)
 
-A Terraform provider for deriving stable, deterministic version strings from secret values — without ever storing those secrets in state.
+The ephemeralversion provider derives stable, deterministic version strings from
+ephemeral (write-only) secret values without ever storing those secrets in Terraform state.
+It solves the problem of Terraform being unable to detect changes to ephemeral variables
+by producing a trackable MD5 version string that updates whenever the secret rotates,
+allowing dependent resources to be automatically updated without leaking secrets into state.
+
 
 ### Why does this exist?
 
