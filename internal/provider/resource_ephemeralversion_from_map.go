@@ -29,8 +29,8 @@ type ephemeralVersionMapModel struct {
 	Versions types.Map    `tfsdk:"versions"`
 }
 
-func (r *EphemeralVersionMapResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = "ephemeralversion_from_map"
+func (r *EphemeralVersionMapResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_from_map"
 }
 
 func (r *EphemeralVersionMapResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
